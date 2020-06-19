@@ -20,7 +20,8 @@ class HomeQuery(object):
 
     child_of = graphene.Field(
         HomeType,
-        id=graphene.Int())
+        id=graphene.Int(),
+        slug=graphene.String())
 
     def resolve_all_home(self, info, **kwargs):
         return HomePage.objects.all()
@@ -39,9 +40,14 @@ class HomeQuery(object):
 
     def resolve_child_of(self, info, **kwargs):
         id = kwargs.get('id')
+        slug = kwargs.get('slug')
 
         if id is not None:
             parent_page = HomePage.objects.get(id=id)
+            return HomePage.objects.child_of(parent_page).get()
+
+        if slug is not None:
+            parent_page = HomePage.objects.get(slug=slug)
             return HomePage.objects.child_of(parent_page).get()
 
         return None

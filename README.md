@@ -8,7 +8,7 @@ https://virtualenv.pypa.io/en/latest/installation/
 
 #### Create virtualenv
 ```bash
-virtualenv -p python382 venv
+python3 -m virtualenv -p python3 venv
 ```
 
 #### Activate virtualenv
