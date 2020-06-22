@@ -1,3 +1,5 @@
+https://wagtail.io/blog/getting-started-with-wagtail-and-graphql/
+https://wagtail.io/blog/graphql-with-streamfield/#
 https://cloud.google.com/python/django/appengine
 https://cloud.google.com/sql/docs/mysql/quickstart-connect-run
 
@@ -34,7 +36,7 @@ python manage.py createsuperuser
 
 ### Create proxy to connect google cloud sql
 ```bash
-./cloud_sql_proxy -instances="gacs-playground:us-central1:cms"=tcp:3306
+./cloud_sql_proxy -instances="liu-onecampus-dev:us-central1:cms"=tcp:3306
 ```
 
 #### Run
@@ -87,11 +89,11 @@ https://cloud.google.com/sdk/docs/downloads-interactive
 #### Build container image
 
 ```bash
-gcloud builds submit --tag=gcr.io/gacs-playground/cms --project=gacs-playground
+gcloud builds submit --tag=gcr.io/liu-onecampus-dev/cms --project=liu-onecampus-dev
 ```
 
 #### Deploy container image
 
 ```bash
-gcloud run deploy cms --image=gcr.io/gacs-playground/cms --platform=managed --region=us-central1 --revision-suffix=v1 --allow-unauthenticated --set-cloudsql-instances gacs-playground:us-central1:cms --project=gacs-playground
+gcloud run deploy cms --image=gcr.io/liu-onecampus-dev/cms --platform=managed --region=us-central1 --revision-suffix=v1 --allow-unauthenticated --set-cloudsql-instances liu-onecampus-dev:us-central1:cms --project=liu-onecampus-dev
 ```

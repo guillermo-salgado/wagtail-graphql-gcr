@@ -9,7 +9,7 @@ from graphene.types.generic import GenericScalar
 from graphene_django.types import DjangoObjectType
 from graphene_django.converter import convert_django_field
 
-from home.models import HomePage, Recipe
+from home.models import HomePage, TestPage, Recipe
 
 
 class GenericStreamFieldType(Scalar):
@@ -54,7 +54,6 @@ def create_stream_field_type(field_name, **kwargs):
         else:
             return DefaultStreamBlock(value=value, block_type=block_type)
 
-    # We also generate the resolver function for the field
     def resolve_field(self, info):
         field = getattr(self, field_name)
         return [convert_block(block) for block in field.stream_data]
@@ -82,7 +81,7 @@ class RecipeBlock(DefaultStreamBlock):
         return Recipe.objects.get(id=self.value)
 
 
-class HomeType(DjangoObjectType):
+class HomeNode(DjangoObjectType):
     (stream, resolve_stream) = create_stream_field_type(
         'stream',
         paragraph=ParagraphBlock,
@@ -93,51 +92,93 @@ class HomeType(DjangoObjectType):
         model = HomePage
 
 
-class HomeQuery():
-    all_home = graphene.List(HomeType)
+class TestNode(DjangoObjectType):
+    class Meta:
+        model = TestPage
 
-    home = graphene.Field(
-        HomeType,
+
+def create_page_query(page, model):
+    all_pages = graphene.List(model)
+
+    by_identifier = graphene.Field(
+        model,
         id=graphene.Int(),
         slug=graphene.String())
 
     child_of = graphene.List(
-        HomeType,
+        model,
         id=graphene.Int(),
         slug=graphene.String())
 
-    def resolve_all_home(self, info, **kwargs):
-        return HomePage.objects.all()
+    descendant_of = graphene.List(
+        model,
+        id=graphene.Int(),
+        slug=graphene.String())
 
-    def resolve_home(self, info, **kwargs):
+    def resolve_all_pages(self, info, **kwargs):
+        return page.objects.all()
+
+    def resolve_by_identifier(self, info, **kwargs):
         id = kwargs.get('id')
         slug = kwargs.get('slug')
 
-        if id is not None:
-            return HomePage.objects.get(pk=id)
+        try:
+            if id is not None:
+                return page.objects.get(pk=id)
 
-        if slug is not None:
-            return HomePage.objects.get(slug=slug)
+            if slug is not None:
+                return page.objects.get(slug=slug)
+        except Exception:
+            return None
 
-        return None
 
     def resolve_child_of(self, info, **kwargs):
         id = kwargs.get('id')
         slug = kwargs.get('slug')
 
-        if id is not None:
-            parent_page = HomePage.objects.get(id=id)
-            return HomePage.objects.child_of(parent_page)
+        try:
+            if id is not None:
+                parent_page = page.objects.get(id=id)
+                return page.objects.child_of(parent_page)
 
-        if slug is not None:
-            parent_page = HomePage.objects.get(slug=slug)
-            return HomePage.objects.child_of(parent_page)
+            if slug is not None:
+                parent_page = page.objects.get(slug=slug)
+                return page.objects.child_of(parent_page)
+        except Exception:
+            return []
 
-        return None
+    def resolve_descendant_of(self, info, **kwargs):
+        id = kwargs.get('id')
+        slug = kwargs.get('slug')
+
+        try:
+            if id is not None:
+                parent_page = page.objects.get(id=id)
+                return page.objects.descendant_of(parent_page)
+
+            if slug is not None:
+                parent_page = page.objects.get(slug=slug)
+                return page.objects.descendant_of(parent_page)
+        except Exception:
+            return []
+
+    return (
+        all_pages, by_identifier, child_of, descendant_of,
+        resolve_all_pages, resolve_by_identifier, resolve_child_of, resolve_descendant_of)
 
 
-class Query(HomeQuery, graphene.ObjectType):
-    pass
+class Query(graphene.ObjectType):
+    # HomePages
+    (
+        all_home_pages, home_by_identifier, home_child_of, home_descendant_of,
+        resolve_all_home_pages, resolve_home_by_identifier, resolve_home_child_of, home_resolve_descendant_of
+    ) = create_page_query(HomePage, HomeNode)
+
+    # TestPages
+    (
+        all_test_pages, test_by_identifier, test_child_of, test_descendant_of,
+        resolve_all_test_pages, resolve_test_by_identifier, resolve_test_child_of, test_resolve_descendant_of
+    ) = create_page_query(TestPage, TestNode)
 
 
 schema = graphene.Schema(query=Query)
